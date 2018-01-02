@@ -45,7 +45,8 @@ public class CPCalculator {
     func fetchBaseValuesOf(_ pokemon: String) -> (baseAtk: Double, baseDef: Double, baseSta: Double)? {
         guard let baseValues = pokemonDataBase[pokemon] else {
             print("Pokemon with name '\(pokemon)' not found!")
-            print("You can add missing Pokemon by adding them to 'pokemonDataBase' in line 4.")
+            print("You can add missing Pokemon by adding them to 'pokemonDataBase' in the 'CPCalculator.swift' file.")
+            print("Check the 'Sources' folder in the Project Navigator.")
             return nil
         }
         return (baseValues.baseAtk, baseValues.baseDef, baseValues.baseSta)
@@ -102,10 +103,10 @@ public class CPCalculator {
     }
     
     /**
-     Most important function: printing all cp values between 66.6% and 100% perfection
+     Printing all cp values between 66.6% and 100% perfection
      - parameters:
-        - pokemon: Your Pokemon
-        - atLvl: Insert the level of your Pokemon
+        - pokemon: Your Pokemon represented by a String. Don't forget to include it to the database.
+        - atLvl: Insert the level of your Pokemon. Should be a number between 0 and 40.
      */
 
     public func printCPRangeOf(_ pokemon: String, atLvl level: Int) {
@@ -122,10 +123,8 @@ public class CPCalculator {
         
         for (iv,cp) in list {
             ivString = iv
-            ivAStr = String(ivString.prefix(1))
-            ivSStr = String(ivString.suffix(1))
-            ivString.removeFirst()
-            ivString.removeLast()
+            ivAStr = String(ivString.removeFirst())
+            ivSStr = String(ivString.removeLast())
             ivDStr = ivString
             perfection = Double(round(10*(Double(digitSum(Int(ivAStr+ivDStr+ivSStr)!)+30)*100/45))/10)
             print("CP: \(cp) | IV: A1\(ivAStr), D1\(ivDStr), S1\(ivSStr) | \(perfection)%")
