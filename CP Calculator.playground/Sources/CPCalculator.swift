@@ -101,8 +101,13 @@ public class CPCalculator {
         //return cpRange.sorted(by: { digitSum(Int($0.0)!) == digitSum(Int($1.0)!) ? $0.1 > $1.1 : digitSum(Int($0.0)!) > digitSum(Int($1.0)!) }) //sorted by IV%
     }
     
-    // most important function: printing all cp values between 66.6% and 100% perfection
-    // example: printCPRangeOf("Feebas", atLvl: 20)
+    /**
+     Most important function: printing all cp values between 66.6% and 100% perfection
+     - parameters:
+        - pokemon: Your Pokemon
+        - atLvl: Insert the level of your Pokemon
+     */
+
     public func printCPRangeOf(_ pokemon: String, atLvl level: Int) {
         guard let list = calculateCPRangeOf(pokemon, atLvl: level) else {
             return
