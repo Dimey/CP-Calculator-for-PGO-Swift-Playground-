@@ -2,11 +2,15 @@ import Cocoa
 
 public class CPCalculator {
     
+    private var defineColorCounter = 1
+    private var rowColorCounter = 1
+    
     public init() {}
     
     // create database and include some Pokemon with base values
     let pokemonDataBase: [String:(baseAtk: Double, baseDef: Double, baseSta: Double)] = [
         "Groudon":(270,251,182),
+        "Kyogre":(270,251,182),
         "Raikou":(241,210,180),
         "Lugia":(193,323,212),
         "Feebas":(29,102,40),
@@ -105,10 +109,10 @@ public class CPCalculator {
     /**
      Printing all cp values between 66.6% and 100% perfection
      - parameters:
-        - pokemon: Your Pokemon represented by a String. Don't forget to include it to the database.
-        - atLvl: Insert the level of your Pokemon. Should be a number between 0 and 40.
+     - pokemon: Your Pokemon represented by a String. Don't forget to include it to the database.
+     - atLvl: Insert the level of your Pokemon. Should be a number between 0 and 40.
      */
-
+    
     public func printCPRangeOf(_ pokemon: String, atLvl level: Int) {
         guard let list = calculateCPRangeOf(pokemon, atLvl: level) else {
             return
@@ -130,4 +134,307 @@ public class CPCalculator {
             print("CP: \(cp) | IV: A1\(ivAStr), D1\(ivDStr), S1\(ivSStr) | \(perfection)%")
         }
     }
+    
+    // print formatted rows for latex tables
+    func latex_printCPRangeOf(_ pokemon: String, atLvl level: Int, withNumberOfValues valueCount: Double) {
+        guard let list = calculateCPRangeOf(pokemon, atLvl: level) else {
+            return
+        }
+        var ivString: String
+        var ivAStr: String
+        var ivDStr: String
+        var ivSStr: String
+        var perfection: Double
+        
+        for (m,ivCP) in list.enumerated() where m<Int(valueCount) {
+            ivString = ivCP.key
+            ivAStr = String(ivString.prefix(1))
+            ivSStr = String(ivString.suffix(1))
+            ivString.removeFirst()
+            ivString.removeLast()
+            ivDStr = ivString
+            perfection = Double(round(10*(Double(digitSum(Int(ivAStr+ivDStr+ivSStr)!)+30)*100/45))/10)
+            print("\\rowcolor{color\(defineColorCounter)}")
+            defineColorCounter += 1
+            print("\(ivCP.value) &1\(ivAStr) &1\(ivDStr) &1\(ivSStr) &\(perfection) \\\\")
+        }
+    }
+    
+    // TODO: RGB Color Counter is missing -> fix it
+    func latex_printRGBColorTransitionFrom(_ color1: (r: Double, g: Double, b: Double),
+                                           to color2: (r: Double, g: Double, b: Double),
+                                           withSteps steps: Double) {
+        let singleStepForR = (color2.r-color1.r)/steps
+        let singleStepForG = (color2.g-color1.g)/steps
+        let singleStepForB = (color2.b-color1.b)/steps
+        
+        var newR: Int
+        var newG: Int
+        var newB: Int
+        for i in 1...Int(steps)+1 {
+            newR = Int(round(color1.r + singleStepForR*Double(i-1)))
+            newG = Int(round(color1.g + singleStepForG*Double(i-1)))
+            newB = Int(round(color1.b + singleStepForB*Double(i-1)))
+            print("\\definecolor{color\(i)}{RGB}{\(newR),\(newG),\(newB)}")
+        }
+    }
+    
+    func latex_printHSBColorTransitionFrom(_ color1: (h: Double, s: Double, b: Double),
+                                           to color2: (h: Double, s: Double, b: Double),
+                                           withSteps steps: Double) {
+        let singleStepForH = (color2.h-color1.h)/steps
+        let singleStepForS = (color2.s-color1.s)/steps
+        let singleStepForB = (color2.b-color1.b)/steps
+        
+        var newH: Double
+        var newS: Double
+        var newB: Double
+        for i in 1...Int(steps)+1 {
+            newH = color1.h + singleStepForH*Double(i-1)
+            if newH < 0 {
+                newH += 1
+            }
+            newS = color1.s + singleStepForS*Double(i-1)
+            newB = color1.b + singleStepForB*Double(i-1)
+            print("\\xdefinecolor{color\(rowColorCounter)}{hsb}{\(newH),\(newS),\(newB)}")
+            rowColorCounter += 1
+        }
+    }
+    
+    public func createLatexSingleCPTableFor(_ pokemon: String,
+                                            atLvl level: Int,
+                                            withColorTransition transition: HSBColorTransition) {
+        print("""
+            \\documentclass[10pt,a4paper]{article}
+            \\usepackage[latin1]{inputenc}
+            \\usepackage[german]{babel}
+            \\usepackage[T1]{fontenc}
+            \\usepackage{caption}
+            
+            \\pdfinfo{
+            /Author (Dimitri Haas)
+            /Title  (\(pokemon) CP Table)
+            }
+            
+            \\usepackage{booktabs}
+            \\usepackage{colortbl}
+            \\usepackage{siunitx}
+            \\usepackage{tcolorbox}
+            
+            \\author{Dimitri Haas}
+            \\title{\(pokemon) CP Table}
+            \\begin{document}
+            \\pagenumbering{gobble}
+            """)
+        
+        latex_printHSBColorTransitionFrom(transition.color1, to: transition.color2, withSteps: 33)
+        print("""
+            \\begin{table}
+            \\caption*{\\Large \\textbf{\\textsc{Groudon} CP Chart} \\\\ \\small by Dimitri Haas }
+            \\centering
+            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,toptitle=1mm,bottomtitle=1mm, lefttitle=1.1cm,title=GROUDON,fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{ccccS[table-format=3.1]}
+            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
+            \\cmidrule(rl){2-4}
+            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            \\midrule
+        """)
+        
+        latex_printCPRangeOf(pokemon, atLvl: level, withNumberOfValues: 34)
+        print("""
+            %\\bottomrule
+            \\end{tabular}}
+            \\caption*{\\scriptsize{v1.0}}
+            \\end{table}
+            \\end{document}
+        """)
+    }
+    
+    public func createLatexDoubleCPTableFor(pokemon1 poke1: String,
+                                            withTransition1 trans1: HSBColorTransition,
+                                            pokemon2 poke2: String,
+                                            withTransition2 trans2: HSBColorTransition,
+                                            atLvl level: Int) {
+        print("""
+            \\documentclass[10pt,a4paper]{article}
+            \\usepackage[latin1]{inputenc}
+            \\usepackage[german]{babel}
+            \\usepackage[T1]{fontenc}
+            \\usepackage{caption}
+            
+            \\pdfinfo{
+            /Author (Dimitri Haas)
+            /Title  (\(poke1)+\(poke2) CP Table)
+            }
+            
+            \\usepackage{booktabs}
+            \\usepackage{colortbl}
+            \\usepackage{siunitx}
+            \\usepackage{tcolorbox}
+            
+            \\author{Dimitri Haas}
+            \\title{\(poke1)+\(poke2) CP Table}
+            \\begin{document}
+            \\pagenumbering{gobble}
+            """)
+        
+        latex_printHSBColorTransitionFrom(trans1.color1, to: trans1.color2, withSteps: 33)
+        latex_printHSBColorTransitionFrom(trans2.color1, to: trans2.color2, withSteps: 33)
+        print("""
+            \\begin{table}[!htb]
+            %\\caption*{Global caption}
+            \\begin{minipage}{.5\\linewidth}
+            \\includegraphics[height=3cm]{pokemans_383}
+            \\centering
+            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
+            toptitle=1mm,bottomtitle=1mm, lefttitle=1.1cm,title=GROUDON,fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{ccccS[table-format=3.1]}
+            %\\toprule
+            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
+            \\cmidrule(rl){2-4}
+            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            \\midrule
+        """)
+        
+        latex_printCPRangeOf(poke1, atLvl: level, withNumberOfValues: 34)
+        print("""
+            %\\bottomrule
+            \\end{tabular}}
+            \\end{minipage}%
+            \\begin{minipage}{.5\\linewidth}
+            \\centering
+            \\includegraphics[height=3cm]{kyogre_sharp.png}
+            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
+            toptitle=1mm,bottomtitle=1mm, lefttitle=1.25cm,title=KYOGRE,fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{ccccS[table-format=3.1]}
+            %\\toprule
+            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
+            \\cmidrule(rl){2-4}
+            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            \\midrule
+        """)
+        latex_printCPRangeOf(poke2, atLvl: level, withNumberOfValues: 34)
+        print("""
+            %\\bottomrule
+            \\end{tabular}}
+            \\end{minipage}
+            \\centering
+            \\scriptsize{v2.0 \\\\ dhaas}
+            \\end{table}
+            \\end{document}
+        """)
+    }
+    
+    public func createLatexTripleCPTableFor(pokemon1 poke1: String,
+                                            withTransition1 trans1: HSBColorTransition,
+                                            pokemon2 poke2: String,
+                                            withTransition2 trans2: HSBColorTransition,
+                                            pokemon3 poke3: String,
+                                            withTransition3 trans3: HSBColorTransition,
+                                            atLvl level: Int) {
+        print("""
+            \\documentclass[10pt,a4paper]{article}
+            \\usepackage[latin1]{inputenc}
+            \\usepackage[german]{babel}
+            \\usepackage[T1]{fontenc}
+            \\usepackage{caption}
+            
+            \\pdfinfo{
+            /Author (Dimitri Haas)
+            /Title  (\(poke1)+\(poke2)+\(poke3) CP Table)
+            }
+            
+            \\usepackage{booktabs}
+            \\usepackage{colortbl}
+            \\usepackage{siunitx}
+            \\usepackage{tcolorbox}
+            \\usepackage{geometry}
+            \\geometry{
+            left=1.5cm,
+            right=1.5cm,
+            }
+            
+            \\author{Dimitri Haas}
+            \\title{\(poke1)+\(poke2)+\(poke3) CP Table}
+            \\begin{document}
+            \\pagenumbering{gobble}
+            """)
+        
+        latex_printHSBColorTransitionFrom(trans1.color1, to: trans1.color2, withSteps: 33)
+        latex_printHSBColorTransitionFrom(trans2.color1, to: trans2.color2, withSteps: 33)
+        latex_printHSBColorTransitionFrom(trans3.color1, to: trans3.color2, withSteps: 33)
+        print("""
+            \\begin{table}[!htb]
+            %\\caption*{Global caption}
+            \\begin{minipage}{.33\\linewidth}
+            \\includegraphics[height=3cm]{poke1}
+            \\centering
+            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
+            toptitle=1mm,bottomtitle=1mm, lefttitle=1.1cm,title=\(poke1.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{ccccS[table-format=3.1]}
+            %\\toprule
+            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
+            \\cmidrule(rl){2-4}
+            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            \\midrule
+            """)
+        latex_printCPRangeOf(poke1, atLvl: level, withNumberOfValues: 34)
+        
+        print("""
+            %\\bottomrule
+            \\end{tabular}}
+            \\end{minipage}%
+            \\begin{minipage}{.33\\linewidth}
+            \\centering
+            \\includegraphics[height=3cm]{poke2.png}
+            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
+            toptitle=1mm,bottomtitle=1mm, lefttitle=1.25cm,title=\(poke2.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{ccccS[table-format=3.1]}
+            %\\toprule
+            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
+            \\cmidrule(rl){2-4}
+            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            \\midrule
+            """)
+        latex_printCPRangeOf(poke2, atLvl: level, withNumberOfValues: 34)
+        
+        print("""
+            %\\bottomrule
+            \\end{tabular}}
+            \\end{minipage}%
+            \\begin{minipage}{.33\\linewidth}
+            \\centering
+            \\includegraphics[height=3cm]{poke3.png}
+            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
+            toptitle=1mm,bottomtitle=1mm, lefttitle=1.25cm,title=\(poke3.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{ccccS[table-format=3.1]}
+            %\\toprule
+            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
+            \\cmidrule(rl){2-4}
+            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            \\midrule
+            """)
+        latex_printCPRangeOf(poke3, atLvl: level, withNumberOfValues: 34)
+        
+        print("""
+            %\\bottomrule
+            \\end{tabular}}
+            \\end{minipage}
+            \\centering
+            \\scriptsize{v2.0 \\\\ dhaas}
+            \\end{table}
+            \\end{document}
+        """)
+    }
+}
+
+public struct HSBColorTransition {
+    public init() {}
+    public init(color1: (h: Double, s: Double, b: Double), color2: (h: Double, s: Double, b: Double)) {
+        self.color1 = color1
+        self.color2 = color2
+    }
+    var color1 = (0.0,0.0,0.0)
+    var color2 = (0.0,0.0,0.0)
+    var name = ""
 }
