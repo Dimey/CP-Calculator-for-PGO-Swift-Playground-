@@ -2,10 +2,10 @@ import Cocoa
 
 public class CPCalculator {
     
+    public init() {}
+    
     private var defineColorCounter = 1
     private var rowColorCounter = 1
-    
-    public init() {}
     
     // create database and include some Pokemon with base values
     let pokemonDataBase: [String:(baseAtk: Double, baseDef: Double, baseSta: Double)] = [
@@ -24,7 +24,9 @@ public class CPCalculator {
         "Latias":(228,268,160),
         "Regice":(179,356,160),
         "Regirock":(179,356,160),
-        "Registeel":(143,285,160)
+        "Registeel":(143,285,160),
+        "Tyranitar":(251,212,200),
+        "Lunatone":(178,163,180)
     ]
     
     let cpMultiplier = [
@@ -140,6 +142,14 @@ public class CPCalculator {
         guard let list = calculateCPRangeOf(pokemon, atLvl: level) else {
             return
         }
+        
+        var boostedLevel = level + 5
+        if boostedLevel > 40 {
+            boostedLevel = 40
+        }
+        
+        let boostedList = calculateCPRangeOf(pokemon, atLvl: boostedLevel)!
+        
         var ivString: String
         var ivAStr: String
         var ivDStr: String
@@ -156,7 +166,7 @@ public class CPCalculator {
             perfection = Double(round(10*(Double(digitSum(Int(ivAStr+ivDStr+ivSStr)!)+30)*100/45))/10)
             print("\\rowcolor{color\(defineColorCounter)}")
             defineColorCounter += 1
-            print("\(ivCP.value) &1\(ivAStr) &1\(ivDStr) &1\(ivSStr) &\(perfection) \\\\")
+            print("\(ivCP.value) &\(boostedList[m].value) &1\(ivAStr) 1\(ivDStr) 1\(ivSStr) &\(perfection) \\\\")
         }
     }
     
@@ -204,6 +214,11 @@ public class CPCalculator {
     public func createLatexSingleCPTableFor(_ pokemon: String,
                                             atLvl level: Int,
                                             withColorTransition transition: HSBColorTransition) {
+        var boostedLevel = level + 5
+        if boostedLevel > 40 {
+            boostedLevel = 40
+        }
+        
         print("""
             \\documentclass[10pt,a4paper]{article}
             \\usepackage[latin1]{inputenc}
@@ -225,26 +240,28 @@ public class CPCalculator {
             \\title{\(pokemon) CP Table}
             \\begin{document}
             \\pagenumbering{gobble}
+            \\tcbset{fonttitle=\\bfseries,center title}
             """)
         
         latex_printHSBColorTransitionFrom(transition.color1, to: transition.color2, withSteps: 33)
         print("""
             \\begin{table}
-            \\caption*{\\Large \\textbf{\\textsc{Groudon} CP Chart} \\\\ \\small by Dimitri Haas }
             \\centering
-            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,toptitle=1mm,bottomtitle=1mm, lefttitle=1.1cm,title=GROUDON,fonttitle=\\large\\bfseries]{
-            \\begin{tabular}{ccccS[table-format=3.1]}
-            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
-            \\cmidrule(rl){2-4}
-            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            \\includegraphics[height=3cm]{poke1}
+            \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,toptitle=1mm,bottomtitle=1mm,title=\(pokemon.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{cccS[table-format=3.1]}
+            \\multicolumn{2}{c}{\\textbf{CP}}    \\\\
+            \\cmidrule(rl){1-2}
+            Lv\(level) &Lv\(boostedLevel)    &\\textbf{IVs}     &\\textbf{\\%} \\\\
             \\midrule
-        """)
+            """)
         
         latex_printCPRangeOf(pokemon, atLvl: level, withNumberOfValues: 34)
         print("""
             %\\bottomrule
             \\end{tabular}}
-            \\caption*{\\scriptsize{v1.0}}
+            \\centering
+            \\scriptsize{v2.1 \\\\ dhaas}
             \\end{table}
             \\end{document}
         """)
@@ -255,6 +272,11 @@ public class CPCalculator {
                                             pokemon2 poke2: String,
                                             withTransition2 trans2: HSBColorTransition,
                                             atLvl level: Int) {
+        var boostedLevel = level + 5
+        if boostedLevel > 40 {
+            boostedLevel = 40
+        }
+        
         print("""
             \\documentclass[10pt,a4paper]{article}
             \\usepackage[latin1]{inputenc}
@@ -276,6 +298,7 @@ public class CPCalculator {
             \\title{\(poke1)+\(poke2) CP Table}
             \\begin{document}
             \\pagenumbering{gobble}
+            \\tcbset{fonttitle=\\bfseries,center title}
             """)
         
         latex_printHSBColorTransitionFrom(trans1.color1, to: trans1.color2, withSteps: 33)
@@ -284,17 +307,16 @@ public class CPCalculator {
             \\begin{table}[!htb]
             %\\caption*{Global caption}
             \\begin{minipage}{.5\\linewidth}
-            \\includegraphics[height=3cm]{pokemans_383}
+            \\includegraphics[height=3cm]{poke1}
             \\centering
             \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
-            toptitle=1mm,bottomtitle=1mm, lefttitle=1.1cm,title=GROUDON,fonttitle=\\large\\bfseries]{
-            \\begin{tabular}{ccccS[table-format=3.1]}
-            %\\toprule
-            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
-            \\cmidrule(rl){2-4}
-            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            toptitle=1mm,bottomtitle=1mm,title=\(poke1.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{cccS[table-format=3.1]}
+            \\multicolumn{2}{c}{\\textbf{CP}}    \\\\
+            \\cmidrule(rl){1-2}
+            Lv\(level) &Lv\(boostedLevel)    &\\textbf{IVs}     &\\textbf{\\%} \\\\
             \\midrule
-        """)
+            """)
         
         latex_printCPRangeOf(poke1, atLvl: level, withNumberOfValues: 34)
         print("""
@@ -303,23 +325,22 @@ public class CPCalculator {
             \\end{minipage}%
             \\begin{minipage}{.5\\linewidth}
             \\centering
-            \\includegraphics[height=3cm]{kyogre_sharp.png}
+            \\includegraphics[height=3cm]{poke2}
             \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
-            toptitle=1mm,bottomtitle=1mm, lefttitle=1.25cm,title=KYOGRE,fonttitle=\\large\\bfseries]{
-            \\begin{tabular}{ccccS[table-format=3.1]}
-            %\\toprule
-            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
-            \\cmidrule(rl){2-4}
-            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            toptitle=1mm,bottomtitle=1mm,title=\(poke2.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{cccS[table-format=3.1]}
+            \\multicolumn{2}{c}{\\textbf{CP}}    \\\\
+            \\cmidrule(rl){1-2}
+            Lv\(level) &Lv\(boostedLevel)    &\\textbf{IVs}     &\\textbf{\\%} \\\\
             \\midrule
-        """)
+            """)
         latex_printCPRangeOf(poke2, atLvl: level, withNumberOfValues: 34)
         print("""
             %\\bottomrule
             \\end{tabular}}
             \\end{minipage}
             \\centering
-            \\scriptsize{v2.0 \\\\ dhaas}
+            \\scriptsize{v2.1 \\\\ dhaas}
             \\end{table}
             \\end{document}
         """)
@@ -332,6 +353,11 @@ public class CPCalculator {
                                             pokemon3 poke3: String,
                                             withTransition3 trans3: HSBColorTransition,
                                             atLvl level: Int) {
+        var boostedLevel = level + 5
+        if boostedLevel > 40 {
+            boostedLevel = 40
+        }
+        
         print("""
             \\documentclass[10pt,a4paper]{article}
             \\usepackage[latin1]{inputenc}
@@ -358,6 +384,7 @@ public class CPCalculator {
             \\title{\(poke1)+\(poke2)+\(poke3) CP Table}
             \\begin{document}
             \\pagenumbering{gobble}
+            \\tcbset{fonttitle=\\bfseries,center title}
             """)
         
         latex_printHSBColorTransitionFrom(trans1.color1, to: trans1.color2, withSteps: 33)
@@ -370,12 +397,11 @@ public class CPCalculator {
             \\includegraphics[height=3cm]{poke1}
             \\centering
             \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
-            toptitle=1mm,bottomtitle=1mm, lefttitle=1.1cm,title=\(poke1.uppercased()),fonttitle=\\large\\bfseries]{
-            \\begin{tabular}{ccccS[table-format=3.1]}
-            %\\toprule
-            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
-            \\cmidrule(rl){2-4}
-            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            toptitle=1mm,bottomtitle=1mm,title=\(poke1.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{cccS[table-format=3.1]}
+            \\multicolumn{2}{c}{\\textbf{CP}}    \\\\
+            \\cmidrule(rl){1-2}
+            Lv\(level) &Lv\(boostedLevel)    &\\textbf{IVs}     &\\textbf{\\%} \\\\
             \\midrule
             """)
         latex_printCPRangeOf(poke1, atLvl: level, withNumberOfValues: 34)
@@ -388,12 +414,11 @@ public class CPCalculator {
             \\centering
             \\includegraphics[height=3cm]{poke2.png}
             \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
-            toptitle=1mm,bottomtitle=1mm, lefttitle=1.25cm,title=\(poke2.uppercased()),fonttitle=\\large\\bfseries]{
-            \\begin{tabular}{ccccS[table-format=3.1]}
-            %\\toprule
-            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
-            \\cmidrule(rl){2-4}
-            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            toptitle=1mm,bottomtitle=1mm,title=\(poke2.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{cccS[table-format=3.1]}
+            \\multicolumn{2}{c}{\\textbf{CP}}    \\\\
+            \\cmidrule(rl){1-2}
+            Lv\(level) &Lv\(boostedLevel)    &\\textbf{IVs}     &\\textbf{\\%} \\\\
             \\midrule
             """)
         latex_printCPRangeOf(poke2, atLvl: level, withNumberOfValues: 34)
@@ -406,12 +431,11 @@ public class CPCalculator {
             \\centering
             \\includegraphics[height=3cm]{poke3.png}
             \\tcbox[left=0.5mm,right=0.5mm,top=1.5mm,bottom=0.5mm,boxsep=0mm,
-            toptitle=1mm,bottomtitle=1mm, lefttitle=1.25cm,title=\(poke3.uppercased()),fonttitle=\\large\\bfseries]{
-            \\begin{tabular}{ccccS[table-format=3.1]}
-            %\\toprule
-            &\\multicolumn{3}{c}{\\textbf{STATS}} \\\\
-            \\cmidrule(rl){2-4}
-            \\textbf{CP}         &A     &D     &S     &\\textbf{\\%} \\\\
+            toptitle=1mm,bottomtitle=1mm,title=\(poke3.uppercased()),fonttitle=\\large\\bfseries]{
+            \\begin{tabular}{cccS[table-format=3.1]}
+            \\multicolumn{2}{c}{\\textbf{CP}}    \\\\
+            \\cmidrule(rl){1-2}
+            Lv\(level) &Lv\(boostedLevel)    &\\textbf{IVs}     &\\textbf{\\%} \\\\
             \\midrule
             """)
         latex_printCPRangeOf(poke3, atLvl: level, withNumberOfValues: 34)
@@ -421,7 +445,7 @@ public class CPCalculator {
             \\end{tabular}}
             \\end{minipage}
             \\centering
-            \\scriptsize{v2.0 \\\\ dhaas}
+            \\scriptsize{v2.1 \\\\ dhaas}
             \\end{table}
             \\end{document}
         """)
@@ -438,3 +462,6 @@ public struct HSBColorTransition {
     var color2 = (0.0,0.0,0.0)
     var name = ""
 }
+
+
+
