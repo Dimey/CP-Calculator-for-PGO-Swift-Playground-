@@ -26,7 +26,8 @@ public class CPCalculator {
         "Regirock":(179,356,160),
         "Registeel":(143,285,160),
         "Tyranitar":(251,212,200),
-        "Lunatone":(178,163,180)
+        "Lunatone":(178,163,180),
+        "Charmander":(116,96,78)
     ]
     
     let cpMultiplier = [
@@ -85,26 +86,39 @@ public class CPCalculator {
     
     // calculate cps in range 10/10/10 to 15/15/15, check possible returns (by cp, by perfection)
     func calculateCPRangeOf(_ pokemon: String, atLvl level: Int) -> [(key: String, value: Int)]? {
-        guard let baseValues = fetchBaseValuesOf(pokemon) else {
-            return nil
-        }
-        let totalCPMultplier = fetchCPMultiplierForLevel(level)
-        
         var cpRange: [String : Int] = [:]
         
         for ivA in 10...15 {
             for ivD in 10...15 {
                 for ivS in 10...15 {
-                    let attack = (baseValues.baseAtk+Double(ivA))*totalCPMultplier
-                    let defense = (baseValues.baseDef+Double(ivD))*totalCPMultplier
-                    let stamina = (baseValues.baseSta+Double(ivS))*totalCPMultplier
-                    
-                    let cp = Int(max(10, floor(sqrt(stamina)*attack*sqrt(defense)/10)))
+                    guard let cp = calculateCPOf(pokemon, atLvl: level, withIVs: (Double(ivA), Double(ivD), Double(ivS))) else {
+                        return nil
+                    }
                     cpRange["\(ivA-10)\(ivD-10)\(ivS-10)"] = cp
                 }
             }
         }
         return cpRange.sorted(by: { $0.1 == $1.1 ? digitSum(Int($0.0)!) > digitSum(Int($1.0)!) : $0.1 > $1.1 }) // sorted by CP
+        //return cpRange.sorted(by: { digitSum(Int($0.0)!) == digitSum(Int($1.0)!) ? $0.1 > $1.1 : digitSum(Int($0.0)!) > digitSum(Int($1.0)!) }) //sorted by IV%
+    }
+    
+    // calculate cps in range 10/10/10 to 15/15/15, check possible returns (by cp, by perfection)
+    func calculateCPRangeOfRaid(_ pokemon: String, atLvl level: Int) -> [(key: String, value: (Int,Int))]? {
+        //Format is [<IV-String>:(Lv20CP,Lv25CP)]
+        var cpRange: [String : (Int,Int)] = [:]
+        
+        for ivA in 10...15 {
+            for ivD in 10...15 {
+                for ivS in 10...15 {
+                    guard let lv20cp = calculateCPOf(pokemon, atLvl: level, withIVs: (Double(ivA), Double(ivD), Double(ivS))),
+                        let lv25cp = calculateCPOf(pokemon, atLvl: level+5, withIVs: (Double(ivA), Double(ivD), Double(ivS))) else {
+                            return nil
+                    }
+                    cpRange["\(ivA-10)\(ivD-10)\(ivS-10)"] = (lv20cp,lv25cp)
+                }
+            }
+        }
+        return cpRange.sorted(by: { $0.1.0 == $1.1.0 ? $0.1.1 > $1.1.1 : $0.1.0 > $1.1.0 }) // sorted by CP
         //return cpRange.sorted(by: { digitSum(Int($0.0)!) == digitSum(Int($1.0)!) ? $0.1 > $1.1 : digitSum(Int($0.0)!) > digitSum(Int($1.0)!) }) //sorted by IV%
     }
     
@@ -134,6 +148,28 @@ public class CPCalculator {
             ivDStr = ivString
             perfection = Double(round(10*(Double(digitSum(Int(ivAStr+ivDStr+ivSStr)!)+30)*100/45))/10)
             print("CP: \(cp) | IV: A1\(ivAStr), D1\(ivDStr), S1\(ivSStr) | \(perfection)%")
+        }
+    }
+    public func printCPRangeOfRaid(_ pokemon: String, atLvl level: Int) {
+        guard let list = calculateCPRangeOfRaid(pokemon, atLvl: level) else {
+            return
+        }
+        
+        var ivString: String
+        var ivAStr: String
+        var ivDStr: String
+        var ivSStr: String
+        var perfection: Double
+        
+        print("– \(pokemon) Lv.\(level) –")
+        
+        for (iv,cp) in list {
+            ivString = iv
+            ivAStr = String(ivString.removeFirst())
+            ivSStr = String(ivString.removeLast())
+            ivDStr = ivString
+            perfection = Double(round(10*(Double(digitSum(Int(ivAStr+ivDStr+ivSStr)!)+30)*100/45))/10)
+            print("Lv20CP: \(cp.0) | Lv25CP: \(cp.1)  | IV: A1\(ivAStr), D1\(ivDStr), S1\(ivSStr) | \(perfection)%")
         }
     }
     
@@ -462,6 +498,5 @@ public struct HSBColorTransition {
     var color2 = (0.0,0.0,0.0)
     var name = ""
 }
-
 
 

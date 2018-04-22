@@ -1,11 +1,20 @@
-import Cocoa
+//
+//  main.swift
+//  DH_CP_Calculation
+//
+//  Created by Dimitri Haas on 24.01.18.
+//  Copyright © 2018 Dimitri Haas. All rights reserved.
+//
+
+import Foundation
 
 // JUST CALCULATION AND PRINTING
 // 1. Create a CPCalculator-Object
 let calculator = CPCalculator()
 
 // 2. Use the non-latex function, insert your pokemon and its level
-calculator.printCPRangeOf("Lunatone", atLvl: 34)
+// calculator.printCPRangeOf("Charmander", atLvl: 20)
+calculator.printCPRangeOfRaid("Latias", atLvl: 20)
 
 // 3. Look at your concole and enjoy the profit!
 
@@ -32,4 +41,5 @@ let trans4 = HSBColorTransition(color1: (200/360,13/100,80/100), color2: (196/36
 //                                    pokemon2: "Kyogre", withTransition2: trans2,
 //                                    pokemon3: "Rayquaza", withTransition3: trans3,
 //                                    atLvl: 20)
-//calculator.createLatexSingleCPTableFor("Aggron", atLvl: 20, withColorTransition: trans4)
+//calculator.createLatexSingleCPTableFor("Latias", atLvl: 20, withColorTransition: trans1)
+//calculator.createLatexDoubleCPTableFor(pokemon1: "Latias", withTransition1: trans1, pokemon2: "Latios", withTransition2: trans2, atLvl: 20)
